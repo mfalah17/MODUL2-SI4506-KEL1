@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+    <style>
+        /* CSS styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        .movie {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .movie img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .movie h2 {
+            margin-top: 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="movieList">
+        <!-- Movie list will be displayed here -->
+    </div>
+
+    <script>
+        // Fetch data from the REST API
+        fetch('http://localhost:5000/movies')
+            .then(response => response.json())
+            .then(data => {
+                // Get the container element
+                const movieList = document.getElementById('movieList');
+
+                // Loop through the data and create HTML elements for each movie
+                data.forEach(movie => {
+                    // Create a div element for each movie
+                    const movieDiv = document.createElement('div');
+                    movieDiv.classList.add('movie');
+
+                    // Create an image element for the thumbnail
+                    const thumbnailImg = document.createElement('img');
+                    thumbnailImg.src = 'http://localhost:5000/thumbnail/' + movie.thumbnail;
+                    thumbnailImg.alt = movie.title;
+
+                    // Create a heading element for the movie title
+                    const titleHeading = document.createElement('h2');
+                    titleHeading.textContent = movie.title;
+
+                    // Create paragraph elements for other movie details
+                    const releaseYearPara = document.createElement('p');
+                    releaseYearPara.textContent = 'Release Year: ' + movie.release_year;
+
+                    const genrePara = document.createElement('p');
+                    genrePara.textContent = 'Genre: ' + movie.genre;
+
+                    // Create a button for "Lihat Detail"
+                    const detailButton = document.createElement('a');
+                    detailButton.href = 'detail.html?movie_id=' + movie.movie_id;
+                    detailButton.classList.add('btn');
+                    detailButton.textContent = 'Lihat Detail';
+
+                    // Create a button for "Tonton Langsung"
+                    const watchButton = document.createElement('a');
+                    watchButton.href = 'http://localhost:3000/stream/' + movie.video_file;
+                    watchButton.classList.add('btn');
+                    watchButton.textContent = 'Tonton Langsung';
+
+                    // Append the elements to the movie div
+                    movieDiv.appendChild(thumbnailImg);
+                    movieDiv.appendChild(titleHeading);
+                    movieDiv.appendChild(releaseYearPara);
+                    movieDiv.appendChild(genrePara);
+                    movieDiv.appendChild(detailButton);
+                    movieDiv.appendChild(watchButton);
+
+                    // Append the movie div to the container
+                    movieList.appendChild(movieDiv);
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>

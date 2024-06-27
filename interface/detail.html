@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Detail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+        }
+        
+        .movie-detail {
+            margin-top: 20px;
+        }
+        
+        .movie-detail h2 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+        
+        .movie-detail p {
+            margin: 10px 0;
+        }
+        
+        iframe {
+            display: block;
+            margin: 0 auto;
+            border: none;
+        }
+
+        .payment-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .payment-message {
+            font-size: 18px;
+            color: #d9534f;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Movie Detail</h1>
+    
+        <div class="movie-detail">
+            <!-- Detail film akan ditambahkan di sini melalui JavaScript -->
+        </div>
+    </div>
+
+    <!-- Skrip JavaScript -->
+    <script>
+        // Mendefinisikan fungsi untuk mengambil data film dari endpoint
+        function getMovieDetails(movieId) {
+            const url = 'http://localhost:5000/movies/' + movieId;
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Movie not found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayMovieDetails(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error.message);
+                    document.querySelector('.movie-detail').innerHTML = '<p>Movie not found. <a href="index.html">Back to Home</a></p>';
+                });
+        }
+
+        // Mendefinisikan fungsi untuk menampilkan detail film di halaman
+        function displayMovieDetails(movie) {
+            const movieDetail = document.createElement('div');
+            const isPremiumPaid = localStorage.getItem('isPremiumPaid_' + movie.movie_id) === 'true';
+
+            // Jika film bukan premium atau sudah dibayar, tampilkan video
+            if (movie.is_premium !== 'true' || isPremiumPaid) {
+                const iframe = document.createElement('iframe');
+                iframe.src = 'http://localhost:3000/stream/' + movie.video_file;
+                iframe.width = '640';
+                iframe.height = '360';
+                iframe.allowFullscreen = true;
+                iframe.setAttribute('title', `Trailer for ${movie.title}`);
+                document.querySelector('.movie-detail').appendChild(iframe);
+            }
+
+            // Menampilkan detail film terlepas dari status premium atau pembayaran
+            movieDetail.innerHTML = `
+                <h2>${movie.title}</h2>
+                <p>Description: ${movie.description}</p>
+                <p>Duration: ${movie.duration}</p>
+                <p>Genre: ${movie.genre}</p>
+                <p>Rating: ${movie.rating}</p>
+                <p>Release Year: ${movie.release_year}</p>
+            `;
+
+            // Jika film adalah premium dan belum dibayar, tampilkan pesan pembayaran
+            if (movie.is_premium === 'true' && !isPremiumPaid) {
+                const paymentSection = document.createElement('div');
+                paymentSection.className = 'payment-section';
+
+                const paymentMessage = document.createElement('p');
+                paymentMessage.className = 'payment-message';
+                paymentMessage.innerText = 'This is a premium movie. Please make a payment to watch the video.';
+
+                const paymentDropdown = document.createElement('select');
+                paymentDropdown.id = 'paymentMethod';
+                paymentDropdown.innerHTML = `
+                    <option value="">Select Payment Method</option>
+                    <option value="credit">Credit Card</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="bank">Bank Transfer</option>
+                `;
+
+                const payButton = document.createElement('button');
+                payButton.className = 'btn';
+                payButton.innerText = 'Pay Now';
+                payButton.onclick = function() {
+                    const selectedMethod = paymentDropdown.value;
+                    if (selectedMethod) {
+                        simulatePayment(movie.movie_id, selectedMethod);
+                    } else {
+                        alert('Please select a payment method.');
+                    }
+                };
+
+                paymentSection.appendChild(paymentMessage);
+                paymentSection.appendChild(paymentDropdown);
+                paymentSection.appendChild(payButton);
+
+                movieDetail.appendChild(paymentSection);
+            }
+
+            // Menambahkan detail film ke dalam div dengan kelas "movie-detail"
+            document.querySelector('.movie-detail').appendChild(movieDetail);
+        }
+
+        // Fungsi simulasi pembayaran
+        function simulatePayment(movieId, method) {
+            alert('Payment successful using ' + method);
+            localStorage.setItem('isPremiumPaid_' + movieId, 'true');
+            // Clear the movie detail section before reloading details
+            document.querySelector('.movie-detail').innerHTML = '';
+            // Reload movie details to allow user to watch the movie
+            getMovieDetails(movieId);
+        }
+
+        // Mendapatkan nilai movie_id dari URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('movie_id');
+
+        if (movieId) {
+            getMovieDetails(movieId);
+        } else {
+            document.querySelector('.movie-detail').innerHTML = '<p>Movie not found. <a href="index.html">Back to Home</a></p>';
+        }
+    </script>
+</body>
+</html>
